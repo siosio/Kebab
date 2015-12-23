@@ -1,26 +1,17 @@
 package kebab.junit4
 
-import kotlin.properties.Delegates
 import kebab.Browser
 import kebab.Configuration
 import org.junit.After
-import org.junit.Test
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.runner.RunWith
-import org.openqa.selenium.By
-import org.openqa.selenium.WebDriver
+import org.junit.Test
 import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.remote.DesiredCapabilities
-import org.openqa.selenium.remote.RemoteWebDriver
-import java.net.URL
 import java.util.concurrent.TimeUnit
 
 class KebabTest {
-    val kebabConfEnv : String by Delegates.notNull()
-    val kebabConfScript : String by Delegates.notNull()
-    var config : Configuration by Delegates.notNull<Configuration>()
-    var browser : Browser by Delegates.notNull<Browser>()
+    lateinit var config: Configuration
+    lateinit var browser: Browser
 
     @Before
     fun setup(){
@@ -34,7 +25,6 @@ class KebabTest {
     fun teardown() {
         config.driver.quit()
     }
-
 
     @Test
     fun test() {
