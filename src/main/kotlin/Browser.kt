@@ -200,9 +200,14 @@ class ConfigurationLoader {
     val conf : Configuration by Delegates.notNull<Configuration>()
 }
 
-class Configuration (val baseUrl : String , val driver : WebDriver) {
+class Configuration (val baseUrl : String , val driver : WebDriver, options: (WebDriver.Options.() -> Unit) = {}) {
     val baseNavigatorWaiting: Wait<Any>? = null
     val rawConfig = HashMap<String, NavigatorFactory>()
+
+    init {
+      options(driver.manage())
+    }
+
     /**
      * Creates the navigator factory to be used.
      *
