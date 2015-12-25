@@ -1,6 +1,5 @@
 package kebab
 
-import org.openqa.selenium.By
 import java.net.URI
 import java.net.URL
 import java.util.*
@@ -15,16 +14,32 @@ import kotlin.properties.Delegates
  * page instance via {@code propertyMissing ( )} and {@code methodMissing ( )}.
  */
 class Browser(val config: Configuration) {
-  // UTF-8の定数
-  val UTF8 = "UTF-8"
-  // ページオブジェクト
-  val page = Page()
+
+  companion object {
+    const val UTF8 = "UTF-8"
+
+    fun drive(config: Configuration, script: Page.() -> Unit) {
+      val browser = Browser(config)
+      browser.go()
+      browser.page.script()
+      browser.quit()
+    }
+  }
+
+  /** page object */
+  val page: Page
+
   // ページの変化通知リスナ
   val pageChangeListeners = LinkedHashSet<String>();
   // レポートを書き込むディレクトリパス
   var reportGroup: String? = null
   // ナビゲータのファクトリ。ナビゲータはページのナビゲートをするんだろな
-  var navigatorFactory: NavigatorFactory
+  val navigatorFactory: NavigatorFactory = config.createNavigatorFactory(this)
+
+  init {
+    page = Page()
+    page.init(this)
+  }
 
   /**
    * If the driver is remote, this object allows access to its capabilities (users of Kebab should not access this object, it is used internally).
@@ -33,17 +48,12 @@ class Browser(val config: Configuration) {
   // @Lazy
   // val augmentedDriver : WebDriver = RemoteDriverOperation(this.javaClass.classLoader).getAugmentedDriver(config.driver)
 
-  init {
-    navigatorFactory = config.createNavigatorFactory(this)
-  }
-
   /**
    * Create a new browser with a default configuration loader, loading the default configuration file.
    *
    * @see kebab.ConfigurationLoader
    */
-  constructor(): this(ConfigurationLoader().conf) {
-  }
+  constructor() : this(ConfigurationLoader().conf)
 
   /**
    * Creates a new browser object via the default constructor and executes the closure
@@ -83,7 +93,6 @@ class Browser(val config: Configuration) {
     // 画面遷移
     browser.go(url)
     // TODO scriptのdelegateをbrowserに。
-      script.delegate = browser
     browser.page.script()
     return browser
   }
@@ -126,7 +135,7 @@ class Browser(val config: Configuration) {
 
   fun calculateUri(path: String, params: kotlin.Map<String, Any>): String {
     var uri = URI(path)
-    if (uri.isAbsolute) {
+    if (!uri.isAbsolute) {
       uri = URI(config.baseUrl).resolve(uri)
     }
     val queryString = toQueryString(params)
@@ -154,29 +163,6 @@ class Browser(val config: Configuration) {
   }
 
 }
-
-
-interface Navigable {
-  fun find(): Navigator
-  fun find(index: Int): Navigator
-  fun find(range: ClosedRange<Int>): Navigator
-  fun find(selector: String): Navigator
-  fun find(selector: String, index: Int): Navigator
-  fun find(selector: String, range: ClosedRange<Int>): Navigator
-  fun find(attributes: MutableMap<String, Any>): Navigator
-  fun find(attributes: MutableMap<String, Any>, index: Int): Navigator
-  fun find(attributes: MutableMap<String, Any>, range: ClosedRange<Int>): Navigator
-  fun find(attributes: MutableMap<String, Any>, selector: String): Navigator
-  fun find(attributes: MutableMap<String, Any>, selector: String, index: Int): Navigator
-  fun find(attributes: MutableMap<String, Any>, selector: String, range: ClosedRange<Int>): Navigator
-  fun find(attributes: MutableMap<String, Any>, bySelector: By): Navigator
-  fun find(attributes: MutableMap<String, Any>, bySelector: By, index: Int): Navigator
-  fun find(attributes: MutableMap<String, Any>, bySelector: By, range: ClosedRange<Int>): Navigator
-  fun find(bySelector: By): Navigator
-  fun find(bySelector: By, index: Int): Navigator
-  fun find(bySelector: By, range: ClosedRange<Int>): Navigator
-}
-
 
 interface PageContentContainer {
 }

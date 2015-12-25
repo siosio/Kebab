@@ -1,11 +1,7 @@
 package kebab
 
-import kebab.*
 import org.openqa.selenium.By
 
-/**
- * Created by yy_yank on 2015/12/19.
- */
 class Page : Navigatable, PageContainer, Initializable, WatingSupport {
     var at = null
     var url = ""

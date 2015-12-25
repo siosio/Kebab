@@ -1,11 +1,9 @@
 package kebab
 
-import kebab.Navigate
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import java.util.*
 import kotlin.collections.asSequence
-import kotlin.properties.Delegates
 import kotlin.sequences.forEach
 
 /**

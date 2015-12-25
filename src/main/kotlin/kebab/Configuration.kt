@@ -4,15 +4,29 @@ import org.openqa.selenium.WebDriver
 import org.openqa.selenium.support.ui.Wait
 import java.util.*
 
-class Configuration(val baseUrl: String, val driver: WebDriver, init: (Options.() -> Unit) = {}) {
-  val baseNavigatorWaiting: Wait<Any>? = null
-  val rawConfig = HashMap<String, NavigatorFactory>()
+fun configuration(init: Configuration.() -> Unit): Configuration {
+  val configuration = Configuration()
+  configuration.init()
+  configuration.options.setup(configuration.driver)
+  return configuration
+}
 
-  init {
+class Configuration() {
+
+  lateinit var baseUrl: String
+
+  lateinit var driver:WebDriver
+
+  lateinit var options: Options
+
+  fun options(init: Options.() -> Unit) {
     val options = Options()
     options.init()
-    options.setup(driver)
+    this.options = options
   }
+
+  val baseNavigatorWaiting: Wait<Any>? = null
+  val rawConfig = HashMap<String, NavigatorFactory>()
 
   /**
    * Creates the navigator factory to be used.
