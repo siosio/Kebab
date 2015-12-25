@@ -1,14 +1,10 @@
 package kebab
 
-import jdk.nashorn.internal.runtime.options.Options
 import org.openqa.selenium.By
-import org.openqa.selenium.WebDriver
-import org.openqa.selenium.support.ui.Wait
 import java.net.URI
 import java.net.URL
 import java.util.*
 import kotlin.collections.emptyMap
-import kotlin.collections.listOf
 import kotlin.properties.Delegates
 
 /**
@@ -18,11 +14,9 @@ import kotlin.properties.Delegates
  * Browser objects dynamically delegate all method calls and property read/writes that it doesn't implement to the current
  * page instance via {@code propertyMissing ( )} and {@code methodMissing ( )}.
  */
-class Browser {
+class Browser(val config: Configuration) {
   // UTF-8の定数
   val UTF8 = "UTF-8"
-  // コンフィグ
-  var config: Configuration by Delegates.notNull<Configuration>()
   // ページオブジェクト
   val page = Page()
   // ページの変化通知リスナ
@@ -30,7 +24,7 @@ class Browser {
   // レポートを書き込むディレクトリパス
   var reportGroup: String? = null
   // ナビゲータのファクトリ。ナビゲータはページのナビゲートをするんだろな
-  var navigatorFactory: NavigatorFactory  by Delegates.notNull<NavigatorFactory>()
+  var navigatorFactory: NavigatorFactory
 
   /**
    * If the driver is remote, this object allows access to its capabilities (users of Kebab should not access this object, it is used internally).
@@ -39,30 +33,17 @@ class Browser {
   // @Lazy
   // val augmentedDriver : WebDriver = RemoteDriverOperation(this.javaClass.classLoader).getAugmentedDriver(config.driver)
 
+  init {
+    navigatorFactory = config.createNavigatorFactory(this)
+  }
 
   /**
    * Create a new browser with a default configuration loader, loading the default configuration file.
    *
    * @see kebab.ConfigurationLoader
    */
-  constructor() {
-    this(ConfigurationLoader().conf)
+  constructor(): this(ConfigurationLoader().conf) {
   }
-
-  private operator fun invoke(conf: Configuration) {
-    this.config = conf
-  }
-
-  /**
-   * Create a new browser backed by the given configuration.
-   *
-   * @see kebab.Configuration
-   */
-  constructor(config: Configuration) {
-    this.config = config
-    this.navigatorFactory = config.createNavigatorFactory(this)
-  }
-
 
   /**
    * Creates a new browser object via the default constructor and executes the closure
@@ -71,7 +52,6 @@ class Browser {
    * @return the created browser
    */
   fun drive(url: String, script: Page.() -> Unit) = drive(this, url, script)
-
 
   /**
    * Creates a new browser object via the default constructor and executes the closure
@@ -103,7 +83,7 @@ class Browser {
     // 画面遷移
     browser.go(url)
     // TODO scriptのdelegateをbrowserに。
-    //  script.delegate = browser
+      script.delegate = browser
     browser.page.script()
     return browser
   }
@@ -205,35 +185,3 @@ class ConfigurationLoader {
   val conf: Configuration by Delegates.notNull<Configuration>()
 }
 
-class Configuration(val baseUrl: String, val driver: WebDriver, options: (WebDriver.Options.() -> Unit) = {}) {
-  val baseNavigatorWaiting: Wait<Any>? = null
-  val rawConfig = HashMap<String, NavigatorFactory>()
-
-  init {
-    options(driver.manage())
-  }
-
-  /**
-   * Creates the navigator factory to be used.
-   *
-   * Returns {@link BrowserBackedNavigatorFactory} by default.
-   * <p>
-   * Override by setting the 'navigatorFactory' to a closure that takes a single {@link Browser} argument
-   * and returns an instance of {@link NavigatorFactory}
-   *
-   * @param browser The browser to use as the basis of the navigatory factory.
-   * @return
-   */
-  fun createNavigatorFactory(browser: Browser): NavigatorFactory {
-    return readValue("navigatorFactory", browser, null)?.let {
-      val result = it.getBase()
-      when(result) {
-        is NavigatorFactory -> result as NavigatorFactory
-        else -> throw InvalidGebConfiguration("navigatorFactory is '$it', it should be a Closure that returns a NavigatorFactory implementation")
-      }
-    } ?: BrowserBackedNavigatorFactory(browser, InnerNavigatorFactory())
-  }
-
-  private fun readValue(key: String, browser: Browser, defaultValue: NavigatorFactory?): NavigatorFactory? =
-      rawConfig.getOrDefault(key, defaultValue)
-}

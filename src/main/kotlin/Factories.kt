@@ -51,7 +51,7 @@ class BrowserBackedNavigatorFactory(browser: Browser, innerNavigatorFactory: Inn
     }
 }
 
-class DefaultLocator(searchContextBasedBasicLocator: SearchContextBasedBasicLocator) : Locator {
+class DefaultLocator(val searchContextBasedBasicLocator: SearchContextBasedBasicLocator) : Locator {
     override fun find(bySelector: By): Navigator {
         throw UnsupportedOperationException()
     }
